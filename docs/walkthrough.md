@@ -80,7 +80,8 @@ Every method also exists in plain C++ (`src/enhance_cpu.cpp`). The tests run bot
   full range changes nothing; CLAHE tables never decrease.
 - The test image's size is not a multiple of 8, to catch mistakes at the edges.
 
-**What these tests do not prove:** both versions follow the same formulas written by the same author. They catch
+**What these tests do not prove:** the look-up tables for equalisation, matching and CLAHE are built by the same
+code (`src/lut.cpp`) in both paths, so comparing the two cannot catch a mistake there. Also, both versions follow the same formulas written by the same author. They catch
 shader bugs, not a wrong formula. The property tests help with that.
 
 ## 9. The study (`apps/study.cpp`, `tools/`)

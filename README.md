@@ -43,6 +43,10 @@ agree within 0.0001 on a 0 to 1 scale. Property tests cover behaviour that must 
 image staying flat under a blur. The tests print the largest difference for each operation. Both versions
 follow the same formulas, so this catches shader mistakes, not a wrong formula.
 
+For histogram equalisation, histogram matching and CLAHE, both paths also build their look-up tables with the
+same C++ code (`src/lut.cpp`). For these three, the comparison checks the histogram and shader stages, not the
+table building. Property tests cover the CLAHE tables and matching an image to itself.
+
 The tests and the study run on GitHub Actions with **Mesa llvmpipe**, which is OpenGL running on the
 processor. **No speed numbers are reported**, because they would say nothing about a graphics card.
 
