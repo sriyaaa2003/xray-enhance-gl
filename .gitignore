@@ -1,0 +1,8 @@
+build/
+data/
+work/
+__pycache__/
+*.nii
+*.nii.gz
+*.zip
+*.pfm

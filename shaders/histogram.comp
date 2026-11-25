@@ -1,0 +1,19 @@
+#version 430 core
+// Counts intensities, optionally per tile. Many threads add to the same counters, so the add is atomic.
+layout(local_size_x = 8, local_size_y = 8) in;
+layout(binding = 0) uniform sampler2D uImage;
+layout(std430, binding = 0) buffer Histogram {
+    uint counts[];
+};
+uniform int uBins;
+uniform ivec2 uTiles;
+
+void main() {
+    ivec2 size = textureSize(uImage, 0);
+    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+    if (pixel.x >= size.x || pixel.y >= size.y) return;
+    float value = clamp(texelFetch(uImage, pixel, 0).r, 0.0, 1.0);
+    int bin = int(value * float(uBins - 1) + 0.5);
+    ivec2 tile = (pixel * uTiles) / size;
+    atomicAdd(counts[(tile.y * uTiles.x + tile.x) * uBins + bin], 1u);
+}

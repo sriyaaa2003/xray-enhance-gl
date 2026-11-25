@@ -1,0 +1,48 @@
+name: study
+
+on:
+  workflow_dispatch:
+
+jobs:
+  study:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install compiler, Mesa and Python packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ libopengl-dev libgl-dev libegl-dev libegl1 libegl-mesa0 libgl1-mesa-dri doctest-dev
+          python3 -m venv .venv
+          .venv/bin/pip install --quiet numpy nibabel pandas matplotlib
+      - name: Build and test
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j
+          ctest --test-dir build --output-on-failure
+      - name: Cache the dataset
+        uses: actions/cache@v4
+        with:
+          path: data/totalseg_small.zip
+          key: totalsegmentator-small-v201
+      - name: Download TotalSegmentator small subset (CC BY 4.0) and check it
+        run: |
+          mkdir -p data
+          if [ ! -f data/totalseg_small.zip ]; then
+            curl -L --fail --retry 5 --retry-delay 20 -o data/totalseg_small.zip \
+              "https://zenodo.org/api/records/10047263/files/Totalsegmentator_dataset_small_v201.zip/content"
+          fi
+          echo "6b5524af4b15e6ba06ef2d700c0c73e0  data/totalseg_small.zip" | md5sum -c -
+      - name: Make projections
+        run: .venv/bin/python tools/make_inputs.py data/totalseg_small.zip work/inputs
+      - name: Run the study
+        run: |
+          mkdir -p work/outputs
+          ./build/study work/inputs work/outputs "$(cat work/inputs/example.txt)"
+      - name: Make tables and figures
+        run: .venv/bin/python tools/report.py work/outputs work/inputs results
+      - uses: actions/upload-artifact@v4
+        with:
+          name: results
+          path: results/
+          retention-days: 30
